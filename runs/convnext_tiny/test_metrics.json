@@ -1,0 +1,18 @@
+{
+  "model": "convnext_tiny",
+  "params": 27823973,
+  "train_sec": 319926.5818519592,
+  "val_best_macro_f1": 0.8235528542577397,
+  "test_acc": 0.802660753880266,
+  "test_macro_f1": 0.8312850217365184,
+  "test_weighted_f1": 0.8035579273139959,
+  "test_macro_precision": 0.8308882431477264,
+  "test_macro_recall": 0.8354217722014331,
+  "per_class_f1": {
+    "cut": 1.0,
+    "hole": 0.8387096774193549,
+    "knot": 0.7340425531914894,
+    "stain": 0.8326180257510729,
+    "thread_error": 0.7510548523206751
+  }
+}

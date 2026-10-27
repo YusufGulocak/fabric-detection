@@ -1,0 +1,18 @@
+{
+  "model": "efficientnet_b0",
+  "params": 4013953,
+  "train_sec": 1232.7411713600159,
+  "val_best_macro_f1": 0.7773515882525228,
+  "test_acc": 0.7804878048780488,
+  "test_macro_f1": 0.8099030207989435,
+  "test_weighted_f1": 0.7828382637460938,
+  "test_macro_precision": 0.8107183974818868,
+  "test_macro_recall": 0.8131051434441264,
+  "per_class_f1": {
+    "cut": 1.0,
+    "hole": 0.8,
+    "knot": 0.65625,
+    "stain": 0.8240343347639485,
+    "thread_error": 0.7692307692307693
+  }
+}

@@ -1,0 +1,9 @@
+# data (large, dataset license: CC BY 4.0 - re-create with prepare_data.py)
+data/
+data_cls/
+*.zip
+# model weights / logs
+*.pt
+*.log
+__pycache__/
+*.pyc
