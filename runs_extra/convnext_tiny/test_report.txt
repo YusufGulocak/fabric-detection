@@ -1,0 +1,11 @@
+              precision    recall  f1-score   support
+
+         cut     0.9355    1.0000    0.9667        29
+        hole     0.7600    0.8636    0.8085        88
+        knot     0.7157    0.8111    0.7604        90
+       stain     0.8772    0.7937    0.8333       126
+thread_error     0.7885    0.6949    0.7387       118
+
+    accuracy                         0.7982       451
+   macro avg     0.8154    0.8327    0.8215       451
+weighted avg     0.8026    0.7982    0.7978       451

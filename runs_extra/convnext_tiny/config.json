@@ -1,0 +1,41 @@
+{
+  "model": "convnext_tiny",
+  "data": "data_cls",
+  "out": "runs_extra",
+  "extra": "data_ext",
+  "epochs": 15,
+  "bs": 32,
+  "lr": 0.0001,
+  "size": 160,
+  "seed": 42,
+  "workers": 0,
+  "device": "cpu",
+  "n_params": 27823973,
+  "classes": [
+    "cut",
+    "hole",
+    "knot",
+    "stain",
+    "thread_error"
+  ],
+  "n_train": 2390,
+  "n_val": 474,
+  "n_test": 451,
+  "train_class_counts": [
+    358,
+    463,
+    439,
+    609,
+    521
+  ],
+  "norm_mean": [
+    0.5424472689628601,
+    0.5357180833816528,
+    0.5416879653930664
+  ],
+  "norm_std": [
+    0.22920793294906616,
+    0.21595752239227295,
+    0.2068442404270172
+  ]
+}

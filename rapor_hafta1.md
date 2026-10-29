@@ -36,6 +36,22 @@ Sıfırdan eğitilen küçük bir CNN bu veride yetersiz kaldı (val macro-F1 �
 
 Sınıf bazlı test F1 (ConvNeXt-Tiny): cut 1,00; hole 0,84; stain 0,83; thread_error 0,75; knot 0,73.
 
+### 6. Cut sınıfı için dış veri denemesi
+Cut sınıfı küçük olduğundan (ana veride 197 kırpma; train 138, val 30, test 29) dış veri araştırıldı:
+- **TILDA-OBB** (195 cut kırpması) ve **Roboflow "fabric" / Afrasiab** (25) eklendi; toplam 220 kırpma, yalnızca train'e (138 → 358).
+- **Figshare FD Dataset** tamamen elendi: dosya adları ve perceptual hash ile görüntülerin %100'ünün (190/190 cut) ana veri setinde zaten bulunduğu görüldü. Elenmeseydi val/test sızıntısı olacaktı.
+- Dış veri, val/test'e ve birbirine benzeyen görüntülerden hash ile arındırıldı; val ve test değişmedi.
+
+Aynı ayarlarla (160 px, 15 epoch, seed 42) sonuçlar:
+
+| Model | Test macro-F1 (ana) | Test macro-F1 (+dış cut) | Test acc (ana) | Test acc (+dış cut) | Cut F1 (ana → +dış) |
+|---|---|---|---|---|---|
+| ResNet50 | 0,803 | 0,816 | 0,769 | 0,794 | 1,00 → 0,95 |
+| EfficientNet-B0 | 0,810 | 0,782 | 0,780 | 0,763 | 1,00 → 0,92 |
+| ConvNeXt-Tiny | 0,831 | 0,822 | 0,803 | 0,798 | 1,00 → 0,97 |
+
+Yorum: tutarlı bir iyileşme gözlenmedi (ResNet50 +0,013, EfficientNet-B0 -0,028, ConvNeXt-Tiny -0,009; tek seed ve 451 örneklik test setinde bu farklar gürültü bandında). Üç modelde de cut precision'ı düştü (0,91-0,94), recall 1,00 kaldı. Olası sebep alan kayması: TILDA görüntüleri gri tonlu endüstriyel dokular, ana veri ise renkli telefon fotoğrafları. Ana sonuçlar dış veri olmadan raporlanmıştır.
+
 ## Değerlendirme
 - ConvNeXt-Tiny en iyi sonucu verdi (ResNet50'ye göre test macro-F1 +0,029).
 - EfficientNet-B0, ResNet50'den 6 kat az parametreyle benzer sonuç verdi.
@@ -50,4 +66,5 @@ Sınıf bazlı test F1 (ConvNeXt-Tiny): cut 1,00; hole 0,84; stain 0,83; thread_
 ## Gelecek hafta
 - Madde 2: transfer learning varyantları (frozen backbone, kademeli açma).
 - Madde 3-5: ViT, ViT+CNN hibrit, Vision Mamba.
+- Kaggle GPU'da 224 px ve 3 seed ile ana deneylerin tekrarı
 - Birden fazla seed ile tekrar (ortalama ± std), augmentation güçlendirme ve görüntü boyutu deneyleri.
