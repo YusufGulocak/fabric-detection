@@ -36,7 +36,7 @@ Kumaş görüntülerinde hata sınıflandırması için 5 farklı model ailesini
 | Veri seti | Rol | Kaynak | Lisans | Durum |
 |-----------|-----|--------|--------|-------|
 | Roboflow Fabric Defects 5-class (v3) | Ana veri (train/val/test) | https://universe.roboflow.com/jaswant-oyc4f/fabric-defects-5-class-b2mwz | CC BY 4.0 | Kullanıldı |
-| TILDA tabanlı Fabric Defect (Mendeley) | Dış veri, yalnızca train; cut / hole / stain / thread_error | https://data.mendeley.com/datasets/8y46pm2m6y/1 | Kontrol edilecek | Kullanıldı (cut: 195 kırpma) |
+| TILDA-OBB (Mendeley) | Dış veri, yalnızca train; yalnızca cut kullanıldı | https://data.mendeley.com/datasets/8y46pm2m6y/1 | Kontrol edilecek | Kullanıldı (cut: 195 kırpma) |
 | FD Dataset (Figshare) | Elendi: görüntülerin %100'ü ana veri setinde zaten var (hash/dosya adı) | https://figshare.com/articles/dataset/FD_Dataset_7z/25546465 | CC BY 4.0 (data.yaml) | Elendi (0 kırpma) |
 | Roboflow "fabric" (Afrasiab) | Dış veri, yalnızca train; cut (45 kutu) | https://universe.roboflow.com/afrasiab/fabric-5pxpq | CC BY 4.0 | Kullanıldı (25 kırpma) |
 | Mendeley Fabric Defects Dataset (Ranathunga) | Kullanılmadı: cut yok | https://data.mendeley.com/datasets/663j22s43c/3 | Kontrol edilecek | Kullanılmadı |
