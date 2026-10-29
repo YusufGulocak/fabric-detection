@@ -36,6 +36,10 @@ def run(name, a, dev):
     out.mkdir(parents=True, exist_ok=True)
     s = make_splits(a.data, seed=a.seed)
     nc = len(s["classes"])
+    if a.extra:  # external data: appended to TRAIN only (val/test untouched)
+        for ci, c in enumerate(s["classes"]):
+            for f in sorted((Path(a.extra) / c).glob("*.png")):
+                s["train"]["paths"].append(str(f)); s["train"]["labels"].append(ci)
     mean, std = train_mean_std(s["train"]["paths"], a.size)
     dl = lambda k, tr: DataLoader(DS(s[k], transforms(a.size, mean, std, tr)),
                                   a.bs, shuffle=tr, num_workers=a.workers)
@@ -124,6 +128,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--model", default="resnet50"); p.add_argument("--data", default="data")
     p.add_argument("--out", default="runs")
+    p.add_argument("--extra", default=None, help="folder with extra TRAIN-only samples (data_ext)")
     p.add_argument("--epochs", type=int, default=30); p.add_argument("--bs", type=int, default=32)
     p.add_argument("--lr", type=float, default=3e-4); p.add_argument("--size", type=int, default=224)
     p.add_argument("--seed", type=int, default=42); p.add_argument("--workers", type=int, default=2)

@@ -7,3 +7,5 @@ data_cls/
 *.log
 __pycache__/
 *.pyc
+data_ext/
+external/
