@@ -25,16 +25,17 @@ from sklearn.metrics import (classification_report, confusion_matrix, f1_score,
 from torch.utils.data import DataLoader
 
 from data import DS, make_splits, train_mean_std, transforms
-from models import REGISTRY
+from models import REGISTRY, units
 
-ORDER = ["resnet50", "efficientnet_b0", "convnext_tiny", "vit", "hybrid", "vision_mamba"]
+PRETRAINED = {"resnet50", "efficientnet_b0", "convnext_tiny"}
+ORDER =["resnet50", "efficientnet_b0", "convnext_tiny", "vit", "hybrid", "vision_mamba"]
 
 
 def run(name, a, dev):
     torch.manual_seed(a.seed); np.random.seed(a.seed)
     out = Path(a.out) / name
     out.mkdir(parents=True, exist_ok=True)
-    s = make_splits(a.data, seed=a.seed)
+    s = make_splits(a.data, out=a.splits, seed=a.seed, stratified=a.stratified)
     nc = len(s["classes"])
     if a.extra:  # external data: appended to TRAIN only (val/test untouched)
         for ci, c in enumerate(s["classes"]):
@@ -47,12 +48,29 @@ def run(name, a, dev):
 
     model = REGISTRY[name](nc, size=a.size).to(dev)
     n_params = sum(p.numel() for p in model.parameters())
-    opt = torch.optim.AdamW(model.parameters(), a.lr, weight_decay=1e-2)
+    if a.strategy != "full":
+        assert name in PRETRAINED, f"--strategy {a.strategy} needs a pretrained model"
+        us = units(model); body, head = us[:-1], us[-1]
+    set_grad = lambda mods, on: [p.requires_grad_(on) for m_ in mods for p in m_.parameters()]
+    if a.strategy == "frozen":          # linear probe: only the head is trained
+        set_grad(body, False)
+        groups = [{"params": list(head.parameters()), "lr": a.lr * 10}]
+    elif a.strategy == "gradual":       # head first, then unfreeze one unit every 2 epochs
+        set_grad(body, False)
+        groups = [{"params": list(m_.parameters()), "lr": a.lr * (10 if m_ is head else 1)}
+                  for m_ in us]
+    elif a.strategy == "discriminative":  # layer-wise lr decay, head 10x
+        groups = [{"params": list(m_.parameters()), "lr": a.lr * (10 if m_ is head else 0.7 ** (len(us) - 2 - i))}
+                  for i, m_ in enumerate(us)]
+    else:
+        groups = model.parameters()
+    opt = torch.optim.AdamW(groups, a.lr, weight_decay=1e-2)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, a.epochs)
+    n_trainable = lambda: sum(p.numel() for p in model.parameters() if p.requires_grad)
     cnt = np.bincount(s["train"]["labels"], minlength=nc)
     lossf = nn.CrossEntropyLoss(torch.tensor(cnt.sum() / (nc * cnt), dtype=torch.float32).to(dev))
 
-    json.dump({**vars(a), "model": name, "device": dev, "n_params": n_params,
+    json.dump({**vars(a), "model": name, "device": dev, "n_params": n_params, "n_trainable_start": n_trainable(),
                "classes": s["classes"], "n_train": len(s["train"]["paths"]),
                "n_val": len(s["val"]["paths"]), "n_test": len(s["test"]["paths"]),
                "train_class_counts": cnt.tolist(), "norm_mean": mean, "norm_std": std},
@@ -73,7 +91,14 @@ def run(name, a, dev):
                 "val_macro_f1", "epoch_sec"])
     best, t_start = -1, time.time()
     for ep in range(a.epochs):
+        if a.strategy == "gradual":
+            k = max(0, (ep - 2) // 2 + 1)   # units unfrozen from the output side
+            set_grad(body[len(body) - k:], True)
         t0 = time.time(); model.train(); tl = tc = n = 0
+        if a.strategy != "full":            # frozen units keep BN statistics fixed
+            for m_ in body:
+                if not any(p.requires_grad for p in m_.parameters()):
+                    m_.eval()
         for x, y in tr:
             x, y = x.to(dev), y.to(dev)
             opt.zero_grad(); o = model(x); l = lossf(o, y); l.backward(); opt.step()
@@ -128,6 +153,9 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--model", default="resnet50"); p.add_argument("--data", default="data")
     p.add_argument("--out", default="runs")
+    p.add_argument("--splits", default="splits.json"); p.add_argument("--stratified", action="store_true")
+    p.add_argument("--strategy", default="full", choices=["full", "frozen", "gradual", "discriminative"],
+                   help="transfer-learning strategy for the pretrained CNNs")
     p.add_argument("--extra", default=None, help="folder with extra TRAIN-only samples (data_ext)")
     p.add_argument("--epochs", type=int, default=30); p.add_argument("--bs", type=int, default=32)
     p.add_argument("--lr", type=float, default=3e-4); p.add_argument("--size", type=int, default=224)

@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from PIL import Image
-from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit, StratifiedGroupKFold
 from torch.utils.data import Dataset
 from torchvision import transforms as T
 
@@ -31,24 +31,34 @@ def scan(root):
     return classes, np.array(paths), np.array(labels), np.array(groups)
 
 
-def make_splits(root, out="splits.json", seed=42, val=0.15, test=0.15):
+def make_splits(root, out="splits.json", seed=42, val=0.15, test=0.15, stratified=False):
     """Split ONCE by group, before any augmentation / normalisation stats.
-    Saved to disk so every model uses the identical split."""
+    Saved to disk so every model uses the identical split.
+    stratified=True keeps class proportions (StratifiedGroupKFold) - used for the clean split."""
     if Path(out).exists():
         return json.load(open(out))
     classes, paths, labels, groups = scan(root)
     idx = np.arange(len(paths))
-    gss = GroupShuffleSplit(1, test_size=test, random_state=seed)
-    trv, te = next(gss.split(idx, labels, groups))
-    gss2 = GroupShuffleSplit(1, test_size=val / (1 - test), random_state=seed)
-    tr, va = next(gss2.split(trv, labels[trv], groups[trv]))
-    tr, va = trv[tr], trv[va]
+    if stratified:
+        def carve(ii, frac):
+            k = round(1 / frac)
+            sgk = StratifiedGroupKFold(k, shuffle=True, random_state=seed)
+            rest, held = next(sgk.split(ii, labels[ii], groups[ii]))
+            return ii[rest], ii[held]
+        trv, te = carve(idx, test)
+        tr, va = carve(trv, val / (1 - test))
+    else:
+        gss = GroupShuffleSplit(1, test_size=test, random_state=seed)
+        trv, te = next(gss.split(idx, labels, groups))
+        gss2 = GroupShuffleSplit(1, test_size=val / (1 - test), random_state=seed)
+        tr, va = next(gss2.split(trv, labels[trv], groups[trv]))
+        tr, va = trv[tr], trv[va]
     # hard leakage check: no group may appear in two splits
     g = lambda i: set(groups[i])
     assert not (g(tr) & g(va) or g(tr) & g(te) or g(va) & g(te)), "group leakage!"
     s = {"classes": classes}
     for name, ii in (("train", tr), ("val", va), ("test", te)):
-        s[name] = {"paths": paths[ii].tolist(), "labels": labels[ii].tolist()}
+        s[name] = {"paths": [p.replace(chr(92), "/") for p in paths[ii]], "labels": labels[ii].tolist()}
     json.dump(s, open(out, "w"))
     return s
 

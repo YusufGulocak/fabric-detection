@@ -9,3 +9,4 @@ __pycache__/
 *.pyc
 data_ext/
 external/
+data_clean/

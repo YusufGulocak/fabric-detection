@@ -155,3 +155,11 @@ def vision_mamba(nc, size=224, **_):
 REGISTRY = {"resnet50": resnet50, "efficientnet_b0": efficientnet_b0,
             "convnext_tiny": convnext_tiny, "vit": vit,
             "hybrid": hybrid, "vision_mamba": vision_mamba}
+
+
+def units(m):
+    """Ordered (input -> output) parameter units of the pretrained torchvision models;
+    the last unit is the classification head. Used by the transfer-learning strategies."""
+    if hasattr(m, "layer4"):  # resnet
+        return [nn.Sequential(m.conv1, m.bn1), m.layer1, m.layer2, m.layer3, m.layer4, m.fc]
+    return list(m.features.children()) + [m.classifier]  # efficientnet / convnext
