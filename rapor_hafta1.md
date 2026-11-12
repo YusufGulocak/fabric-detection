@@ -52,6 +52,20 @@ Aynı ayarlarla (160 px, 15 epoch, seed 42) sonuçlar:
 
 Yorum: tutarlı bir iyileşme gözlenmedi (ResNet50 +0,013, EfficientNet-B0 -0,028, ConvNeXt-Tiny -0,009; tek seed ve 451 örneklik test setinde bu farklar gürültü bandında). Üç modelde de cut precision'ı düştü (0,91-0,94), recall 1,00 kaldı. Olası sebep alan kayması: TILDA görüntüleri gri tonlu endüstriyel dokular, ana veri ise renkli telefon fotoğrafları. Ana sonuçlar dış veri olmadan raporlanmıştır.
 
+### 7. Madde 2: transfer learning stratejileri
+ConvNeXt-Tiny, aynı ayarlar (160 px, 15 epoch, seed 42, eski bölme):
+
+| Strateji | Val macro-F1 | Test acc | Test macro-F1 |
+|---|---|---|---|
+| frozen (yalnızca sınıflandırıcı) | 0,698 | 0,698 | 0,733 |
+| gradual (kademeli açma) | 0,774 | 0,778 | 0,803 |
+| full fine-tune | 0,824 | 0,803 | 0,831 |
+
+Gövdeyi ne kadar açarsak sonuç o kadar iyi; ImageNet özellikleri kumaş hatası için tek başına yetmiyor. Gradual, frozen'a göre +0,07 kazandırdı ama full'ün 0,03 altında kaldı. Discriminative lr koşulmadı. Tek seed olduğu için farklar kesin değildir.
+
+### 8. Temiz bölme
+Hata analizinde test örneklerinin bir kısmının augmentation kopyası olduğu ve aynı hatanın birden fazla kırpmayla sayıldığı görüldü. Kaynak başına en az augmente kopya alındı, çakışan kutular birleştirildi, grup içi neredeyse aynı kırpmalar atıldı: 2927 kırpma, 1744 grup. Bölme sınıf dengeli ve gruba göre yapıldı: train 2091, val 418, test 418 (cut test: 28). Yukarıdaki sonuçlar eski bölmeye aittir; tüm modeller bu bölmede yeniden koşulacak.
+
 ## Değerlendirme
 - ConvNeXt-Tiny en iyi sonucu verdi (ResNet50'ye göre test macro-F1 +0,029).
 - EfficientNet-B0, ResNet50'den 6 kat az parametreyle benzer sonuç verdi.
@@ -64,7 +78,7 @@ Yorum: tutarlı bir iyileşme gözlenmedi (ResNet50 +0,013, EfficientNet-B0 -0,0
 - Eğitim CPU'da yapıldığı için giriş 160×160 ile sınırlı; daha büyük giriş sonuçları değiştirebilir.
 
 ## Gelecek hafta
-- Madde 2: transfer learning varyantları (frozen backbone, kademeli açma).
+- Madde 2: discriminative lr ve tüm stratejilerin temiz bölmede tekrarı.
 - Madde 3-5: ViT, ViT+CNN hibrit, Vision Mamba.
-- Kaggle GPU'da 224 px ve 3 seed ile ana deneylerin tekrarı
+- Kaggle GPU'da temiz bölmede, 224 px ve 3 seed ile ana deneylerin tekrarı (paket hazır: kaggle_upload_clean.zip)
 - Birden fazla seed ile tekrar (ortalama ± std), augmentation güçlendirme ve görüntü boyutu deneyleri.

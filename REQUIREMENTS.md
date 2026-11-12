@@ -59,6 +59,19 @@ ImageNet-pretrained, tam fine-tune. Küçük veri (~3k kırpma) nedeniyle sıfı
 | ConvNeXt-Tiny | 28M | Modern CNN; ViT ile adil kıyas sağlar |
 Ortak ayar: aynı split, aynı normalizasyon, ağırlıklı CE, AdamW lr 1e-4, cosine schedule.
 
+## 5.3 Transfer learning stratejileri (Madde 2)
+ConvNeXt-Tiny üzerinde, aynı bölme ve ayarlar (160 px, 15 epoch, lr 1e-4, seed 42):
+| Strateji | Açıklama | Test macro-F1 | Test acc |
+|----------|----------|---------------|----------|
+| frozen | Gövde dondurulmuş, yalnızca sınıflandırıcı (lr x10) | 0,733 | 0,698 |
+| gradual | 2 epoch sadece baş, sonra her 2 epochta bir birim açılır | 0,803 | 0,778 |
+| full | Tam fine-tune (Madde 1) | 0,831 | 0,803 |
+| discriminative | Katman bazlı lr azaltma (0,7), baş x10 | koşulmadı | |
+Gövdeyi ne kadar açarsak sonuç o kadar iyi. Tek seed, eski bölme; kesin sıralama için seed tekrarı gerekir.
+
+## 5.4 Temiz bölme
+Hata analizi (ConvNeXt test hataları) iki sorun gösterdi: test/val'da augmentation kopyası kırpmalar ve aynı hatanın birden fazla sayılması. `prepare_clean.py`: kaynak başına en az augmente kopya, çakışan kutuların (IoU > 0,6) birleştirilmesi, grup içi neredeyse aynı kırpmaların atılması → 2927 kırpma, 1744 grup. `--stratified` ile StratifiedGroupKFold bölmesi: 2091 / 418 / 418 (cut: 141 / 28 / 28). Eski bölmedeki sonuçlar bu bölmeyle doğrudan karşılaştırılamaz; tüm modeller temiz bölmede yeniden koşulacak.
+
 ## 6. Deney planı
 1. Veri hazırlık + kopya temizliği + split (tek sefer)
 2. resnet50 → efficientnet_b0 → convnext_tiny → vit → hybrid → vision_mamba (aynı epoch, lr, boyut)
